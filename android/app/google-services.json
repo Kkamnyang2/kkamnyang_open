@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "365181229549",
+    "project_id": "aac-talkseed",
+    "storage_bucket": "aac-talkseed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365181229549:android:7519c212861106b1e76fe4",
+        "android_client_info": {
+          "package_name": "com.talkseed"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXE1rKnCC9z2fhJDePTk1avtxHIuq-IWY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
