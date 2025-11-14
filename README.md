@@ -122,7 +122,11 @@ aac_html_app_v2/
 │   ├── app.js         # 메인 애플리케이션 로직
 │   ├── storage.js     # localStorage 데이터 관리
 │   └── tts.js         # TTS 엔진 관리
-└── README.md          # 프로젝트 문서
+├── README.md          # 프로젝트 문서
+├── MAINTENANCE.md     # 유지보수 가이드
+├── update.sh          # 빠른 업데이트 스크립트 (Mac/Linux)
+├── update.bat         # 빠른 업데이트 스크립트 (Windows)
+└── release.sh         # 릴리스 스크립트 (Mac/Linux)
 ```
 
 ## 💾 데이터 저장
@@ -160,6 +164,26 @@ aac_html_app_v2/
 - 자유로운 배경색 선택
 - 이미지 업로드 (5MB 이하)
 - 텍스트 크기 자동 조절
+
+## 🔧 개발 및 유지보수
+
+### 유지보수 가이드
+프로젝트 업데이트, 버전 관리, 배포 방법은 **[MAINTENANCE.md](MAINTENANCE.md)**를 참고하세요.
+
+### 빠른 업데이트
+```bash
+# Mac/Linux
+./update.sh
+
+# Windows
+update.bat
+```
+
+### 버전 릴리스
+```bash
+# Mac/Linux
+./release.sh v18
+```
 
 ## 🤝 기여
 
