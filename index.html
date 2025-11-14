@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>TalkSeed AAC - 의사소통 앱</title>
+    <link rel="stylesheet" href="css/style.css?v=16">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body>
+    <!-- 앱 컨테이너 -->
+    <div id="app">
+        <!-- 상단 앱바 -->
+        <header class="app-bar">
+            <button id="sidebar-toggle" class="icon-btn">
+                <i class="material-icons">menu</i>
+            </button>
+            <h1 class="app-title">TalkSeed AAC</h1>
+            <div class="app-actions">
+                <button id="debug-btn" class="icon-btn" onclick="debugCards()" title="디버그: 카드 강제 렌더링">
+                    <i class="material-icons">bug_report</i>
+                </button>
+                <button id="add-card-btn" class="icon-btn">
+                    <i class="material-icons">add_circle</i>
+                </button>
+                <button id="settings-btn" class="icon-btn">
+                    <i class="material-icons">settings</i>
+                </button>
+            </div>
+        </header>
+
+        <!-- 메인 컨텐츠 영역 -->
+        <div class="main-content">
+            <!-- 좌측 사이드바 -->
+            <aside id="sidebar" class="sidebar collapsed">
+                <div class="sidebar-content">
+                    <button class="category-item active" data-category="all">
+                        <i class="material-icons">home</i>
+                        <span class="category-name">전체</span>
+                    </button>
+                </div>
+                <button id="manage-categories-btn" class="manage-btn">
+                    <i class="material-icons">edit</i>
+                    <span>카테고리 관리</span>
+                </button>
+            </aside>
+
+            <!-- 상단: 큰 카드 그리드 -->
+            <main class="card-grid-container">
+                <div id="card-grid" class="card-grid">
+                    <!-- 카드들이 여기 동적으로 추가됨 -->
+                </div>
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <i class="material-icons">add_box</i>
+                    <p>카드를 추가해보세요!</p>
+                    <button class="btn-primary" onclick="openAddCardDialog()">
+                        <i class="material-icons">add</i>
+                        첫 카드 만들기
+                    </button>
+                </div>
+            </main>
+        </div>
+
+        <!-- 하단 문장 구성 바 -->
+        <div class="sentence-builder-bar">
+            <!-- 현재 구성 중인 문장 -->
+            <div class="sentence-display">
+                <input type="text" 
+                       id="sentence-text-input" 
+                       class="sentence-text-input" 
+                       placeholder="카드를 선택하거나 직접 입력하세요"
+                       aria-label="문장 입력">
+                <div class="sentence-actions">
+                    <button class="icon-btn" onclick="speakSentence()" title="문장 읽기">
+                        <i class="material-icons">volume_up</i>
+                    </button>
+                    <button class="icon-btn" onclick="saveFavoriteSentence()" title="자주 쓰는 문장으로 저장">
+                        <i class="material-icons">bookmark_add</i>
+                    </button>
+                    <button class="icon-btn" onclick="openInfographicGrid()" title="인포그래픽 그리드">
+                        <i class="material-icons">grid_on</i>
+                    </button>
+                    <button class="icon-btn" onclick="clearSentence()" title="문장 지우기">
+                        <i class="material-icons">clear</i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 보조 단어 버튼들 (동적으로 로드됨) -->
+            <div class="word-buttons">
+                <!-- JavaScript에서 동적으로 생성됨 -->
+                <button class="word-btn more-btn" onclick="toggleWordPanel()">
+                    <i class="material-icons">more_horiz</i>
+                </button>
+                <button class="word-btn manage-btn" onclick="openAuxiliaryWordsDialog()" title="보조 단어 관리">
+                    <i class="material-icons">settings</i>
+                </button>
+            </div>
+
+            <!-- 확장 단어 패널 (토글) -->
+            <div id="word-panel" class="word-panel" style="display: none;">
+                <div class="word-panel-header">
+                    <h4>추가 단어</h4>
+                    <button class="icon-btn" onclick="toggleWordPanel()">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="word-panel-content">
+                    <!-- 즐겨찾기 카드들 (동적 렌더링) -->
+                    <div class="word-group" id="favorite-cards-group">
+                        <span class="word-group-title">⭐ 즐겨찾기 카드</span>
+                        <div id="favorite-cards-list" class="favorite-cards-grid">
+                            <!-- JavaScript에서 동적으로 생성됨 -->
+                        </div>
+                    </div>
+
+                    <!-- 모든 카드들 (카테고리별, 동적 렌더링) -->
+                    <div id="all-cards-by-category">
+                        <!-- JavaScript에서 동적으로 생성됨 -->
+                    </div>
+
+                    <!-- 보조 단어들 -->
+                    <div class="word-group">
+                        <span class="word-group-title">💬 보조 단어</span>
+                        <div id="auxiliary-words-in-panel" class="auxiliary-words-grid">
+                            <!-- JavaScript에서 동적으로 생성됨 -->
+                        </div>
+                    </div>
+
+                    <!-- 기본 조사/동사/형용사 -->
+                    <div class="word-group">
+                        <span class="word-group-title">조사</span>
+                        <button class="word-btn" onclick="addWordToSentence('을/를')">을/를</button>
+                        <button class="word-btn" onclick="addWordToSentence('이/가')">이/가</button>
+                        <button class="word-btn" onclick="addWordToSentence('에')">에</button>
+                        <button class="word-btn" onclick="addWordToSentence('와/과')">와/과</button>
+                        <button class="word-btn" onclick="addWordToSentence('의')">의</button>
+                    </div>
+                    <div class="word-group">
+                        <span class="word-group-title">동사</span>
+                        <button class="word-btn" onclick="addWordToSentence('하다')">하다</button>
+                        <button class="word-btn" onclick="addWordToSentence('가다')">가다</button>
+                        <button class="word-btn" onclick="addWordToSentence('오다')">오다</button>
+                        <button class="word-btn" onclick="addWordToSentence('주다')">주다</button>
+                        <button class="word-btn" onclick="addWordToSentence('보다')">보다</button>
+                    </div>
+                    <div class="word-group">
+                        <span class="word-group-title">형용사</span>
+                        <button class="word-btn" onclick="addWordToSentence('좋다')">좋다</button>
+                        <button class="word-btn" onclick="addWordToSentence('나쁘다')">나쁘다</button>
+                        <button class="word-btn" onclick="addWordToSentence('크다')">크다</button>
+                        <button class="word-btn" onclick="addWordToSentence('작다')">작다</button>
+                        <button class="word-btn" onclick="addWordToSentence('많다')">많다</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 자주 쓰는 문장 -->
+            <div class="favorite-sentences">
+                <button class="favorite-tab" onclick="toggleFavorites()">
+                    <i class="material-icons">bookmark</i>
+                    <span>자주 쓰는 문장</span>
+                    <i class="material-icons toggle-icon">expand_less</i>
+                </button>
+                <div id="favorite-list" class="favorite-list" style="display: none;">
+                    <!-- 자주 쓰는 문장들이 여기 표시됨 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카드 추가/편집 다이얼로그 -->
+    <div id="card-dialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h2 id="dialog-title">새 카드 추가</h2>
+                <button class="icon-btn" onclick="closeCardDialog()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <div class="form-group">
+                    <label for="card-text">텍스트 *</label>
+                    <input type="text" id="card-text" placeholder="카드에 표시될 텍스트" required>
+                </div>
+                <div class="form-group">
+                    <label>이미지 선택</label>
+                    <div class="image-upload-section">
+                        <!-- 이미지 미리보기 -->
+                        <div id="image-preview-container" class="image-preview-container" style="display: none;">
+                            <img id="image-preview" class="image-preview" alt="미리보기">
+                            <button type="button" class="remove-image-btn" onclick="removeCardImage()" title="이미지 제거">
+                                <i class="material-icons">close</i>
+                            </button>
+                        </div>
+                        
+                        <!-- 업로드 버튼들 -->
+                        <div class="image-upload-buttons">
+                            <button type="button" class="btn-secondary" onclick="document.getElementById('card-image-file').click()">
+                                <i class="material-icons">photo_library</i>
+                                앨범에서 선택
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="document.getElementById('card-image-camera').click()">
+                                <i class="material-icons">photo_camera</i>
+                                사진 촬영
+                            </button>
+                        </div>
+                        
+                        <!-- 숨겨진 파일 입력 -->
+                        <input type="file" 
+                               id="card-image-file" 
+                               accept="image/*" 
+                               style="display: none;" 
+                               onchange="handleImageUpload(event)">
+                        <input type="file" 
+                               id="card-image-camera" 
+                               accept="image/*" 
+                               capture="environment"
+                               style="display: none;" 
+                               onchange="handleImageUpload(event)">
+                        
+                        <small style="display: block; margin-top: 8px;">또는 외부 이미지 URL 입력:</small>
+                        <input type="url" id="card-image-url" placeholder="https://example.com/image.png" style="margin-top: 4px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="card-category">카테고리</label>
+                    <select id="card-category">
+                        <option value="">카테고리 선택</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="card-color">배경색</label>
+                    <div class="color-picker">
+                        <input type="color" id="card-color" value="#BBDEFB">
+                        <span id="color-preview" class="color-preview"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="closeCardDialog()">취소</button>
+                <button class="btn-primary" onclick="saveCard()">
+                    <i class="material-icons">save</i>
+                    저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 관리 다이얼로그 -->
+    <div id="category-dialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h2>카테고리 관리</h2>
+                <button class="icon-btn" onclick="closeCategoryDialog()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <div class="form-group">
+                    <label for="category-name">카테고리 이름 *</label>
+                    <input type="text" id="category-name" placeholder="예: 음식, 감정, 요청">
+                </div>
+                <div class="form-group">
+                    <label for="category-icon">아이콘</label>
+                    <select id="category-icon">
+                        <optgroup label="음식 & 식사">
+                            <option value="restaurant">🍽️ 식사/레스토랑</option>
+                            <option value="fastfood">🍔 패스트푸드</option>
+                            <option value="local_cafe">☕ 카페/음료</option>
+                            <option value="cake">🎂 디저트/케이크</option>
+                            <option value="icecream">🍦 아이스크림</option>
+                            <option value="local_pizza">🍕 피자</option>
+                            <option value="rice_bowl">🍚 밥</option>
+                            <option value="lunch_dining">🥗 점심</option>
+                            <option value="breakfast_dining">🥞 아침</option>
+                            <option value="dinner_dining">🍖 저녁</option>
+                        </optgroup>
+                        <optgroup label="감정 & 표현">
+                            <option value="emoji_emotions">😊 행복</option>
+                            <option value="sentiment_very_satisfied">😄 매우 기쁨</option>
+                            <option value="sentiment_satisfied">🙂 만족</option>
+                            <option value="sentiment_neutral">😐 보통</option>
+                            <option value="sentiment_dissatisfied">😟 불만족</option>
+                            <option value="sentiment_very_dissatisfied">😢 매우 슬픔</option>
+                            <option value="mood">😌 기분</option>
+                            <option value="mood_bad">😠 화남</option>
+                            <option value="favorite">❤️ 좋아요</option>
+                            <option value="favorite_border">💔 싫어요</option>
+                        </optgroup>
+                        <optgroup label="일상 & 활동">
+                            <option value="home">🏠 집</option>
+                            <option value="wc">🚽 화장실</option>
+                            <option value="bed">🛏️ 침대/수면</option>
+                            <option value="shower">🚿 샤워</option>
+                            <option value="bathtub">🛁 목욕</option>
+                            <option value="checkroom">👕 옷/옷장</option>
+                            <option value="directions_walk">🚶 걷기</option>
+                            <option value="directions_run">🏃 달리기</option>
+                            <option value="accessible">♿ 접근성</option>
+                        </optgroup>
+                        <optgroup label="학교 & 학습">
+                            <option value="school">📚 학교</option>
+                            <option value="menu_book">📖 책/읽기</option>
+                            <option value="edit">✏️ 쓰기</option>
+                            <option value="calculate">🔢 수학</option>
+                            <option value="science">🔬 과학</option>
+                            <option value="palette">🎨 미술</option>
+                            <option value="music_note">🎵 음악</option>
+                            <option value="sports">⚽ 체육</option>
+                        </optgroup>
+                        <optgroup label="놀이 & 오락">
+                            <option value="toys">🎮 게임</option>
+                            <option value="sports_esports">🕹️ 비디오게임</option>
+                            <option value="smart_toy">🤖 로봇/장난감</option>
+                            <option value="park">🎪 공원</option>
+                            <option value="beach_access">🏖️ 해변</option>
+                            <option value="movie">🎬 영화</option>
+                            <option value="tv">📺 TV</option>
+                            <option value="headphones">🎧 음악감상</option>
+                        </optgroup>
+                        <optgroup label="건강 & 의료">
+                            <option value="local_hospital">🏥 병원</option>
+                            <option value="medical_services">💊 약/치료</option>
+                            <option value="healing">🩹 치료/힐링</option>
+                            <option value="sick">🤒 아픔</option>
+                            <option value="medication">💉 주사/약</option>
+                            <option value="psychology">🧠 정신건강</option>
+                        </optgroup>
+                        <optgroup label="도움 & 요청">
+                            <option value="help">🆘 도움</option>
+                            <option value="support">🤝 지원</option>
+                            <option value="notifications">🔔 알림</option>
+                            <option value="warning">⚠️ 주의</option>
+                            <option value="report_problem">❗ 문제</option>
+                            <option value="info">ℹ️ 정보</option>
+                        </optgroup>
+                        <optgroup label="사람 & 관계">
+                            <option value="person">👤 나/사람</option>
+                            <option value="people">👥 사람들</option>
+                            <option value="family_restroom">👨‍👩‍👧‍👦 가족</option>
+                            <option value="child_care">👶 아기</option>
+                            <option value="elderly">👴 노인</option>
+                            <option value="face">😊 얼굴</option>
+                        </optgroup>
+                        <optgroup label="교통 & 이동">
+                            <option value="directions_car">🚗 자동차</option>
+                            <option value="directions_bus">🚌 버스</option>
+                            <option value="directions_subway">🚇 지하철</option>
+                            <option value="directions_bike">🚲 자전거</option>
+                            <option value="local_taxi">🚕 택시</option>
+                            <option value="flight">✈️ 비행기</option>
+                        </optgroup>
+                        <optgroup label="날씨 & 자연">
+                            <option value="wb_sunny">☀️ 맑음</option>
+                            <option value="cloud">☁️ 구름</option>
+                            <option value="wb_cloudy">🌤️ 흐림</option>
+                            <option value="umbrella">☔ 비</option>
+                            <option value="ac_unit">❄️ 눈</option>
+                            <option value="nightlight">🌙 밤</option>
+                            <option value="pets">🐕 애완동물</option>
+                            <option value="spa">🌸 자연</option>
+                        </optgroup>
+                        <optgroup label="기타">
+                            <option value="star">⭐ 별/중요</option>
+                            <option value="grade">🏆 성취</option>
+                            <option value="celebration">🎉 축하</option>
+                            <option value="card_giftcard">🎁 선물</option>
+                            <option value="phone">📞 전화</option>
+                            <option value="chat">💬 대화</option>
+                            <option value="mail">📧 메일</option>
+                            <option value="alarm">⏰ 시간/알람</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category-bg-color">배경색</label>
+                    <input type="color" id="category-bg-color" value="#2196F3">
+                </div>
+                <button class="btn-primary" onclick="addCategory()">
+                    <i class="material-icons">add</i>
+                    카테고리 추가
+                </button>
+                
+                <hr style="margin: 20px 0;">
+                
+                <h3>등록된 카테고리</h3>
+                <div id="category-list" class="category-list">
+                    <!-- 카테고리 목록이 여기 표시됨 -->
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="closeCategoryDialog()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 다이얼로그 -->
+    <div id="settings-dialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h2>설정</h2>
+                <button class="icon-btn" onclick="closeSettingsDialog()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <div class="form-group">
+                    <label>🎤 TTS 엔진</label>
+                    <div id="tts-engine-info" style="padding: 12px; background: #E3F2FD; border-radius: 8px; margin-bottom: 16px;">
+                        <strong id="engine-name">로딩 중...</strong>
+                        <p style="margin: 4px 0 0 0; font-size: 13px; color: #1565C0;">
+                            ResponsiveVoice는 한국어를 더 자연스럽게 발음합니다
+                        </p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>TTS 음성 속도</label>
+                    <input type="range" id="speech-rate" min="0.5" max="2" step="0.1" value="1">
+                    <span id="rate-value">1.0x</span>
+                    <button class="btn-secondary" onclick="TTS.test()" style="margin-left: 12px; padding: 4px 12px; font-size: 12px;">
+                        <i class="material-icons" style="font-size: 16px;">volume_up</i>
+                        테스트
+                    </button>
+                </div>
+                <div class="form-group">
+                    <label>TTS 음높이</label>
+                    <input type="range" id="speech-pitch" min="0.5" max="2" step="0.1" value="1">
+                    <span id="pitch-value">1.0x</span>
+                </div>
+                <hr>
+                <h3 style="margin-bottom: 16px;">📁 데이터 관리</h3>
+                <div class="form-group">
+                    <label>CSV 파일로 카드 가져오기/내보내기</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn-primary" onclick="exportCardsToCSV()">
+                            <i class="material-icons">download</i>
+                            카드 내보내기 (CSV)
+                        </button>
+                        <button class="btn-primary" onclick="document.getElementById('csv-import').click()">
+                            <i class="material-icons">upload</i>
+                            카드 가져오기 (CSV)
+                        </button>
+                        <input type="file" id="csv-import" accept=".csv" style="display: none;" onchange="importCardsFromCSV(event)">
+                    </div>
+                    <small>CSV 형식: 텍스트,이미지URL,카테고리,배경색</small>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <button class="btn-danger" onclick="clearAllData()">
+                        <i class="material-icons">delete_forever</i>
+                        모든 데이터 삭제
+                    </button>
+                    <small>모든 카드와 카테고리가 삭제됩니다 (복구 불가)</small>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="closeSettingsDialog()">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 보조 단어 관리 다이얼로그 -->
+    <div id="auxiliary-words-dialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog">
+            <div class="dialog-header">
+                <h2>보조 단어 관리</h2>
+                <button class="icon-btn" onclick="closeAuxiliaryWordsDialog()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">
+                    하단 바에 표시될 보조 단어를 추가하거나 삭제할 수 있습니다. (최대 16개)
+                </p>
+                
+                <div class="form-group">
+                    <label for="aux-word-text">새 보조 단어</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" 
+                               id="aux-word-text" 
+                               placeholder="예: 주세요, 해주세요" 
+                               maxlength="10"
+                               onkeypress="if(event.key==='Enter') addAuxiliaryWord()">
+                        <button class="btn-primary" onclick="addAuxiliaryWord()">
+                            <i class="material-icons" style="font-size: 18px;">add</i>
+                            추가
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>현재 보조 단어 목록</label>
+                    <div id="auxiliary-words-list" class="auxiliary-words-list">
+                        <!-- 보조 단어 목록이 여기 표시됨 -->
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" onclick="closeAuxiliaryWordsDialog()">닫기</button>
+                <button class="btn-secondary" onclick="resetAuxiliaryWords()">기본값 복원</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 인포그래픽 그리드 다이얼로그 -->
+    <div id="infographic-dialog" class="dialog-overlay" style="display: none;">
+        <div class="dialog infographic-dialog">
+            <div class="dialog-header">
+                <h2>📊 인포그래픽 그리드</h2>
+                <button class="icon-btn" onclick="closeInfographicDialog()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="dialog-content">
+                <div id="infographic-grid" class="infographic-grid">
+                    <!-- JavaScript에서 동적으로 생성됨 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 인디케이터 -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ResponsiveVoice API (한국어 TTS 최적화) -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=JQZ0h1bp"></script>
+    
+    <script src="js/storage.js?v=16"></script>
+    <script src="js/tts.js?v=16"></script>
+    <script src="js/app.js?v=16"></script>
+</body>
+</html>
