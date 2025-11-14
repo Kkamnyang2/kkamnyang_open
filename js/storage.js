@@ -60,6 +60,17 @@ const Storage = {
         return category;
     },
 
+    updateCategory(categoryId, updates) {
+        const categories = this.getCategories();
+        const index = categories.findIndex(c => c.id === categoryId);
+        if (index !== -1) {
+            categories[index] = { ...categories[index], ...updates };
+            this.saveCategories(categories);
+            return categories[index];
+        }
+        return null;
+    },
+
     deleteCategory(categoryId) {
         const categories = this.getCategories();
         const filtered = categories.filter(c => c.id !== categoryId);
@@ -256,6 +267,14 @@ const Storage = {
                 imageUrl: 'https://cdn-icons-png.flaticon.com/512/1946/1946436.png',
                 category: '요청',
                 backgroundColor: '#A5D6A7',
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: '13',
+                text: '사랑해요',
+                imageUrl: 'https://www.genspark.ai/api/files/s/PNvFJJsu',
+                category: '감정',
+                backgroundColor: '#FFB6C1',
                 createdAt: new Date().toISOString()
             }
         ];

@@ -565,6 +565,19 @@ function openCategoryDialog() {
  */
 function closeCategoryDialog() {
     document.getElementById('category-dialog').style.display = 'none';
+    
+    // 편집 모드 해제 및 폼 초기화
+    editingCategoryId = null;
+    document.getElementById('category-name').value = '';
+    document.getElementById('category-icon').value = 'restaurant';
+    document.getElementById('category-bg-color').value = '#2196F3';
+    
+    // 버튼을 추가 모드로 되돌리기
+    const addBtn = document.querySelector('#category-dialog .btn-primary');
+    if (addBtn) {
+        addBtn.innerHTML = '<i class="material-icons">add</i> 카테고리 추가';
+        addBtn.onclick = addCategory;
+    }
 }
 
 /**
@@ -589,6 +602,11 @@ function addCategory() {
     
     // 입력 필드 초기화
     document.getElementById('category-name').value = '';
+    document.getElementById('category-icon').value = 'restaurant';
+    document.getElementById('category-bg-color').value = '#2196F3';
+    
+    // 편집 모드 해제
+    editingCategoryId = null;
     
     showToast('카테고리가 추가되었습니다');
 }
@@ -610,11 +628,80 @@ function renderCategoryList() {
             <div class="category-info">
                 <strong>${cat.name}</strong>
             </div>
-            <button onclick="deleteCategory('${cat.id}')">
+            <button onclick="editCategory('${cat.id}')" title="편집" style="color: var(--primary-color);">
+                <i class="material-icons">edit</i>
+            </button>
+            <button onclick="deleteCategory('${cat.id}')" title="삭제">
                 <i class="material-icons">delete</i>
             </button>
         </div>
     `).join('');
+}
+
+/**
+ * 카테고리 편집
+ */
+let editingCategoryId = null;
+
+function editCategory(categoryId) {
+    const category = currentCategories.find(c => c.id === categoryId);
+    if (!category) return;
+    
+    editingCategoryId = categoryId;
+    
+    // 폼에 기존 값 채우기
+    document.getElementById('category-name').value = category.name;
+    document.getElementById('category-icon').value = category.icon;
+    document.getElementById('category-bg-color').value = category.backgroundColor;
+    
+    // 추가 버튼을 수정 버튼으로 변경
+    const addBtn = document.querySelector('#category-dialog .btn-primary');
+    if (addBtn) {
+        addBtn.textContent = '수정';
+        addBtn.onclick = updateCategory;
+    }
+    
+    showToast(`"${category.name}" 카테고리 편집 중`);
+}
+
+/**
+ * 카테고리 수정 저장
+ */
+function updateCategory() {
+    const name = document.getElementById('category-name').value.trim();
+    const icon = document.getElementById('category-icon').value;
+    const bgColor = document.getElementById('category-bg-color').value;
+    
+    if (!name) {
+        showToast('카테고리 이름을 입력해주세요');
+        return;
+    }
+    
+    AACStorage.updateCategory(editingCategoryId, {
+        name: name,
+        icon: icon,
+        backgroundColor: bgColor
+    });
+    
+    // 편집 모드 해제
+    editingCategoryId = null;
+    
+    // 추가 버튼으로 되돌리기
+    const addBtn = document.querySelector('#category-dialog .btn-primary');
+    if (addBtn) {
+        addBtn.textContent = '카테고리 추가';
+        addBtn.innerHTML = '<i class="material-icons">add</i> 카테고리 추가';
+        addBtn.onclick = addCategory;
+    }
+    
+    // 폼 초기화
+    document.getElementById('category-name').value = '';
+    document.getElementById('category-icon').value = 'restaurant';
+    document.getElementById('category-bg-color').value = '#2196F3';
+    
+    loadCategories();
+    renderCategoryList();
+    showToast('카테고리가 수정되었습니다');
 }
 
 /**
