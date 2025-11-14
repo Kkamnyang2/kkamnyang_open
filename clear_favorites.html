@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>즐겨찾기 초기화</title>
+</head>
+<body>
+    <h1>즐겨찾기 초기화</h1>
+    <button onclick="clearFavorites()">즐겨찾기 삭제</button>
+    <div id="result"></div>
+    <script>
+        function clearFavorites() {
+            localStorage.removeItem('aac_favorite_cards');
+            document.getElementById('result').innerHTML = '✅ 즐겨찾기가 삭제되었습니다. 메인 앱을 새로고침하세요.';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스크립트 로드 테스트</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .test-result {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .pass { border-left: 4px solid #4CAF50; }
+        .fail { border-left: 4px solid #f44336; }
+        pre {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        h1 { color: #333; }
+        h3 { margin: 0 0 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 JavaScript 파일 로드 테스트</h1>
+    <div id="results">
+        <p>테스트 실행 중...</p>
+    </div>
+
+    <!-- ResponsiveVoice API (선택사항) -->
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=JQZ0h1bp"></script>
+    
+    <!-- 실제 앱 스크립트 로드 -->
+    <script src="js/storage.js?v=2"></script>
+    <script src="js/tts.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
+
+    <script>
+        // DOM이 완전히 로드된 후 실행
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('=== 테스트 시작 ===');
+            
+            const results = document.getElementById('results');
+            
+            function addResult(title, passed, details) {
+                const div = document.createElement('div');
+                div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+                div.innerHTML = `
+                    <h3>${passed ? '✅' : '❌'} ${title}</h3>
+                    <pre>${details}</pre>
+                `;
+                results.appendChild(div);
+            }
+
+            // 초기 메시지 제거
+            results.innerHTML = '';
+            
+            // 약간의 지연을 주어 모든 스크립트가 실행될 시간 확보
+            setTimeout(() => {
+                // 1. storage.js 테스트
+                console.log('1. Testing storage.js...');
+                if (typeof window.AACStorage !== 'undefined') {
+                    try {
+                        const methodCount = Object.keys(window.AACStorage).length;
+                        addResult('storage.js 로드', true, 
+                            `✅ AACStorage 객체가 정상적으로 로드되었습니다.\n` +
+                            `타입: ${typeof window.AACStorage}\n` +
+                            `메서드 개수: ${methodCount}\n` +
+                            `메서드 목록: ${Object.keys(window.AACStorage).join(', ')}`
+                        );
+                        
+                        // getCards 테스트
+                        try {
+                            const cards = window.AACStorage.getCards();
+                            addResult('AACStorage.getCards() 호출', true,
+                                `✅ 카드 로드 성공\n` +
+                                `카드 개수: ${cards.length}\n` +
+                                `첫 번째 카드: ${cards[0] ? cards[0].text : 'N/A'}`
+                            );
+                        } catch (error) {
+                            addResult('AACStorage.getCards() 호출', false,
+                                `❌ 에러: ${error.message}\n${error.stack}`
+                            );
+                        }
+                    } catch (error) {
+                        addResult('storage.js 로드', false,
+                            `❌ AACStorage 접근 중 에러: ${error.message}`
+                        );
+                    }
+                } else {
+                    const storageKeys = Object.keys(window).filter(k => k.toLowerCase().includes('storage'));
+                    addResult('storage.js 로드', false,
+                        `❌ window.AACStorage가 undefined입니다.\n\n` +
+                        `window 객체에서 'storage' 관련 키:\n${storageKeys.join(', ') || '없음'}\n\n` +
+                        `가능한 원인:\n` +
+                        `1. storage.js 파일이 로드되지 않음\n` +
+                        `2. JavaScript 문법 오류\n` +
+                        `3. 브라우저 캐시 문제`
+                    );
+                }
+
+                // 2. tts.js 테스트
+                console.log('2. Testing tts.js...');
+                if (typeof window.TTS !== 'undefined') {
+                    try {
+                        const methodCount = Object.keys(window.TTS).length;
+                        addResult('tts.js 로드', true,
+                            `✅ TTS 객체가 정상적으로 로드되었습니다.\n` +
+                            `타입: ${typeof window.TTS}\n` +
+                            `속성/메서드 개수: ${methodCount}\n` +
+                            `주요 메서드: ${Object.keys(window.TTS).filter(k => typeof window.TTS[k] === 'function').slice(0, 5).join(', ')}`
+                        );
+                    } catch (error) {
+                        addResult('tts.js 로드', false,
+                            `❌ TTS 접근 중 에러: ${error.message}`
+                        );
+                    }
+                } else {
+                    addResult('tts.js 로드', false,
+                        `❌ window.TTS가 undefined입니다.\n\n` +
+                        `가능한 원인:\n` +
+                        `1. tts.js 파일이 로드되지 않음\n` +
+                        `2. storage.js 의존성 문제로 실행 실패\n` +
+                        `3. JavaScript 문법 오류`
+                    );
+                }
+
+                // 3. app.js 변수 테스트
+                console.log('3. Testing app.js...');
+                if (typeof currentCards !== 'undefined') {
+                    addResult('app.js 로드', true,
+                        `✅ app.js가 정상적으로 로드되었습니다.\n` +
+                        `currentCards 타입: ${typeof currentCards}\n` +
+                        `카드 개수: ${currentCards.length}\n` +
+                        `currentCategories 개수: ${typeof currentCategories !== 'undefined' ? currentCategories.length : 'N/A'}`
+                    );
+                } else {
+                    addResult('app.js 로드', false,
+                        `❌ currentCards 변수가 undefined입니다.\n\n` +
+                        `가능한 원인:\n` +
+                        `1. app.js 파일이 로드되지 않음\n` +
+                        `2. 의존성(AACStorage, TTS) 로드 실패로 app.js 실행 중단\n` +
+                        `3. JavaScript 문법 오류`
+                    );
+                }
+
+                // 4. 전체 요약
+                console.log('=== 테스트 완료 ===');
+                console.log('window.AACStorage:', typeof window.AACStorage);
+                console.log('window.TTS:', typeof window.TTS);
+                console.log('currentCards:', typeof currentCards);
+                
+                const summary = document.createElement('div');
+                summary.className = 'test-result';
+                summary.style.background = '#e3f2fd';
+                summary.innerHTML = `
+                    <h3>📊 테스트 요약</h3>
+                    <pre>AACStorage: ${typeof window.AACStorage}
+TTS: ${typeof window.TTS}
+currentCards: ${typeof currentCards}
+currentCategories: ${typeof currentCategories}
+
+브라우저: ${navigator.userAgent}
+시간: ${new Date().toLocaleString()}</pre>
+                `;
+                results.appendChild(summary);
+                
+            }, 500); // 500ms 지연
+        });
+
+        // 전역 에러 캡처
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error('전역 에러:', message, source, lineno);
+            const results = document.getElementById('results');
+            if (results) {
+                const div = document.createElement('div');
+                div.className = 'test-result fail';
+                div.innerHTML = `
+                    <h3>❌ 전역 에러 발생</h3>
+                    <pre>메시지: ${message}
+파일: ${source}
+라인: ${lineno}:${colno}
+${error ? 'Stack: ' + error.stack : ''}</pre>
+                `;
+                results.appendChild(div);
+            }
+            return false;
+        };
+    </script>
+</body>
+</html>

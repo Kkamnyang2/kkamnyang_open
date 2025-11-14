@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAC 앱 - 진단 도구</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2196F3;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: #757575;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .info-grid {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .info-row {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 200px;
+        }
+        
+        .info-value {
+            color: #333;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .status-ok {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .status-error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .status-warning {
+            color: #FF9800;
+            font-weight: bold;
+        }
+        
+        .json-display {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        button.secondary {
+            background: #757575;
+        }
+        
+        button.secondary:hover {
+            background: #616161;
+        }
+        
+        button.danger {
+            background: #f44336;
+        }
+        
+        button.danger:hover {
+            background: #d32f2f;
+        }
+        
+        .test-result {
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+        
+        .test-result.success {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+            color: #2e7d32;
+        }
+        
+        .test-result.error {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+        
+        .test-result h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <i class="material-icons">bug_report</i>
+            AAC 앱 진단 도구
+        </h1>
+        <p class="subtitle">앱의 현재 상태를 진단하고 문제를 파악합니다</p>
+        
+        <!-- 기본 정보 -->
+        <div class="section">
+            <h2>📊 기본 정보</h2>
+            <div class="info-grid">
+                <div class="info-row">
+                    <span class="info-label">AACStorage 로드 상태:</span>
+                    <span class="info-value" id="storage-status"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">localStorage 사용 가능:</span>
+                    <span class="info-value" id="localstorage-status"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">저장된 카드 개수:</span>
+                    <span class="info-value" id="cards-count"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">저장된 카테고리 개수:</span>
+                    <span class="info-value" id="categories-count"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">즐겨찾기 카드 개수:</span>
+                    <span class="info-value" id="favorites-count"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 카테고리 상세 -->
+        <div class="section">
+            <h2>📂 카테고리 상세 정보</h2>
+            <div class="json-display" id="categories-json"></div>
+        </div>
+        
+        <!-- 카드 상세 -->
+        <div class="section">
+            <h2>🎴 카드 상세 정보</h2>
+            <div class="json-display" id="cards-json"></div>
+        </div>
+        
+        <!-- 카테고리별 카드 분류 -->
+        <div class="section">
+            <h2>📑 카테고리별 카드 분류</h2>
+            <div id="cards-by-category"></div>
+        </div>
+        
+        <!-- 필터링 테스트 -->
+        <div class="section">
+            <h2>🔍 음식 카테고리 필터링 테스트</h2>
+            <div id="filter-test"></div>
+        </div>
+        
+        <!-- 작업 버튼 -->
+        <div class="button-group">
+            <button onclick="runDiagnostics()">
+                <i class="material-icons">refresh</i>
+                진단 새로고침
+            </button>
+            <button class="secondary" onclick="window.location.href='index.html'">
+                <i class="material-icons">arrow_back</i>
+                메인으로 돌아가기
+            </button>
+            <button class="danger" onclick="clearAllData()">
+                <i class="material-icons">delete_forever</i>
+                모든 데이터 삭제
+            </button>
+        </div>
+    </div>
+    
+    <script src="js/storage.js?v=7"></script>
+    <script>
+        function runDiagnostics() {
+            console.clear();
+            console.log('🔍 진단 시작...');
+            
+            // AACStorage 확인
+            const storageStatus = document.getElementById('storage-status');
+            if (typeof AACStorage === 'undefined') {
+                storageStatus.innerHTML = '<span class="status-error">❌ 로드 안됨</span>';
+                console.error('❌ AACStorage not loaded!');
+                return;
+            } else {
+                storageStatus.innerHTML = '<span class="status-ok">✅ 정상 로드됨</span>';
+                console.log('✅ AACStorage loaded');
+            }
+            
+            // localStorage 확인
+            const localStorageStatus = document.getElementById('localstorage-status');
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                localStorageStatus.innerHTML = '<span class="status-ok">✅ 사용 가능</span>';
+                console.log('✅ localStorage available');
+            } catch (e) {
+                localStorageStatus.innerHTML = '<span class="status-error">❌ 사용 불가</span>';
+                console.error('❌ localStorage not available:', e);
+                return;
+            }
+            
+            // 데이터 로드
+            const cards = AACStorage.getCards();
+            const categories = AACStorage.getCategories();
+            const favorites = AACStorage.getFavoriteCards();
+            
+            console.log('📊 로드된 데이터:', {
+                cards: cards.length,
+                categories: categories.length,
+                favorites: favorites.length
+            });
+            
+            // 기본 정보 표시
+            document.getElementById('cards-count').innerHTML = `<span class="status-ok">${cards.length}개</span>`;
+            document.getElementById('categories-count').innerHTML = `<span class="status-ok">${categories.length}개</span>`;
+            document.getElementById('favorites-count').innerHTML = `<span class="status-ok">${favorites.length}개</span>`;
+            
+            // 카테고리 JSON 표시
+            document.getElementById('categories-json').textContent = JSON.stringify(categories, null, 2);
+            
+            // 카드 JSON 표시
+            document.getElementById('cards-json').textContent = JSON.stringify(cards, null, 2);
+            
+            // 카테고리별 카드 분류
+            const cardsByCategoryDiv = document.getElementById('cards-by-category');
+            let categoryHtml = '';
+            
+            categories.forEach(cat => {
+                const categoryCards = cards.filter(card => card.category === cat.name);
+                console.log(`📂 카테고리 "${cat.name}" (ID: ${cat.id}):`, categoryCards.length, '개 카드');
+                console.log('   카드 목록:', categoryCards.map(c => `"${c.text}"`).join(', '));
+                
+                const statusClass = categoryCards.length > 0 ? 'status-ok' : 'status-warning';
+                categoryHtml += `
+                    <div class="info-row">
+                        <span class="info-label">${cat.name} (ID: ${cat.id}):</span>
+                        <span class="info-value ${statusClass}">${categoryCards.length}개 카드</span>
+                    </div>
+                `;
+            });
+            
+            // 카테고리 없는 카드
+            const uncategorized = cards.filter(card => !categories.some(cat => cat.name === card.category));
+            if (uncategorized.length > 0) {
+                console.log('⚠️ 카테고리 없는 카드:', uncategorized);
+                categoryHtml += `
+                    <div class="info-row">
+                        <span class="info-label">카테고리 없음:</span>
+                        <span class="info-value status-warning">${uncategorized.length}개 카드</span>
+                    </div>
+                `;
+            }
+            
+            cardsByCategoryDiv.innerHTML = categoryHtml;
+            
+            // 음식 카테고리 필터링 테스트
+            const filterTestDiv = document.getElementById('filter-test');
+            const foodCategory = categories.find(c => c.name === '음식');
+            
+            if (!foodCategory) {
+                filterTestDiv.innerHTML = `
+                    <div class="test-result error">
+                        <h3><i class="material-icons">error</i> 테스트 실패</h3>
+                        <p>❌ "음식" 카테고리를 찾을 수 없습니다!</p>
+                    </div>
+                `;
+                console.error('❌ "음식" 카테고리를 찾을 수 없습니다!');
+                return;
+            }
+            
+            console.log('🔍 음식 카테고리 찾음:', foodCategory);
+            
+            // 필터링 로직 (app.js의 renderCards와 동일)
+            const filteredCards = cards.filter(card => card.category === foodCategory.name);
+            
+            console.log('🎴 필터링 결과:', filteredCards);
+            console.log('   - 필터링된 카드 개수:', filteredCards.length);
+            console.log('   - 필터링된 카드:', filteredCards.map(c => `"${c.text}" (category: "${c.category}")`));
+            
+            if (filteredCards.length === 0) {
+                // 디버깅: 모든 카드의 category 값 확인
+                console.log('🔍 전체 카드의 category 값:');
+                cards.forEach(card => {
+                    console.log(`   - "${card.text}": category="${card.category}" (타입: ${typeof card.category})`);
+                });
+                
+                filterTestDiv.innerHTML = `
+                    <div class="test-result error">
+                        <h3><i class="material-icons">error</i> 테스트 실패</h3>
+                        <p>❌ "음식" 카테고리에 해당하는 카드가 없습니다!</p>
+                        <p><strong>카테고리 이름:</strong> "${foodCategory.name}"</p>
+                        <p><strong>전체 카드 개수:</strong> ${cards.length}개</p>
+                        <p><strong>필터링 결과:</strong> ${filteredCards.length}개</p>
+                        <p><strong>문제:</strong> 카드의 category 속성이 "${foodCategory.name}"과 일치하지 않습니다.</p>
+                    </div>
+                `;
+                console.error('❌ 음식 카테고리 필터링 실패!');
+            } else {
+                filterTestDiv.innerHTML = `
+                    <div class="test-result success">
+                        <h3><i class="material-icons">check_circle</i> 테스트 성공</h3>
+                        <p>✅ "음식" 카테고리에서 ${filteredCards.length}개의 카드를 찾았습니다:</p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            ${filteredCards.map(card => `<li>"${card.text}" (배경색: ${card.backgroundColor})</li>`).join('')}
+                        </ul>
+                        <p style="margin-top: 10px;"><strong>결론:</strong> 필터링 로직은 정상 작동합니다.</p>
+                    </div>
+                `;
+                console.log('✅ 음식 카테고리 필터링 성공!');
+            }
+            
+            console.log('✅ 진단 완료');
+        }
+        
+        function clearAllData() {
+            if (!confirm('정말로 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+            
+            const keysToRemove = [
+                'aac_cards',
+                'aac_categories',
+                'aac_favorite_cards',
+                'aac_favorite_sentences',
+                'aac_auxiliary_words',
+                'aac_settings'
+            ];
+            
+            keysToRemove.forEach(key => {
+                localStorage.removeItem(key);
+                console.log('🗑️ 삭제됨:', key);
+            });
+            
+            alert('✅ 모든 데이터가 삭제되었습니다.\n페이지를 새로고침합니다.');
+            location.reload();
+        }
+        
+        // 페이지 로드 시 진단 실행
+        window.addEventListener('DOMContentLoaded', runDiagnostics);
+    </script>
+</body>
+</html>

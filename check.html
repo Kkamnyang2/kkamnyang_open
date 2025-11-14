@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAC 앱 체크</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { 
+            color: white; 
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            margin: 15px 0;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: #667eea;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .status.pass { background: #4CAF50; color: white; }
+        .status.fail { background: #f44336; color: white; }
+        .status.pending { background: #ff9800; color: white; }
+        .info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: white;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 AAC 앱 시스템 체크</h1>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>시스템 점검 중...</p>
+        </div>
+        <div id="results" style="display: none;"></div>
+    </div>
+
+    <!-- 앱 스크립트 -->
+    <script src="js/storage.js?v=3"></script>
+    <script src="js/tts.js?v=3"></script>
+    <script src="js/app.js?v=3"></script>
+
+    <script>
+    (function() {
+        'use strict';
+        
+        // 결과 컨테이너
+        let resultsDiv;
+        let loadingDiv;
+        
+        // 테스트 결과 저장
+        const testResults = {
+            storage: { status: 'pending', message: '' },
+            tts: { status: 'pending', message: '' },
+            app: { status: 'pending', message: '' }
+        };
+        
+        // 결과 카드 생성
+        function createCard(title, status, info) {
+            return `
+                <div class="card">
+                    <h2>${title}</h2>
+                    <span class="status ${status}">${
+                        status === 'pass' ? '✅ 통과' : 
+                        status === 'fail' ? '❌ 실패' : 
+                        '⏳ 대기 중'
+                    }</span>
+                    ${info ? `<div class="info">${info}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        // 결과 렌더링
+        function renderResults() {
+            if (!resultsDiv) return;
+            
+            let html = '';
+            
+            // Storage 테스트
+            html += createCard(
+                '📦 Storage 모듈',
+                testResults.storage.status,
+                testResults.storage.message
+            );
+            
+            // TTS 테스트
+            html += createCard(
+                '🔊 TTS 모듈',
+                testResults.tts.status,
+                testResults.tts.message
+            );
+            
+            // App 테스트
+            html += createCard(
+                '🚀 App 초기화',
+                testResults.app.status,
+                testResults.app.message
+            );
+            
+            // 액션 버튼
+            const allPass = Object.values(testResults).every(r => r.status === 'pass');
+            html += `
+                <div class="card" style="text-align: center;">
+                    <h2>다음 단계</h2>
+                    ${allPass ? 
+                        '<p style="margin-bottom: 15px;">✅ 모든 테스트 통과! 메인 앱을 실행할 수 있습니다.</p>' :
+                        '<p style="margin-bottom: 15px;">⚠️ 일부 테스트가 실패했습니다.</p>'
+                    }
+                    <button onclick="location.href='index.html'">메인 앱 열기</button>
+                    <button onclick="location.href='debug.html'">디버그 페이지</button>
+                    <button onclick="location.reload()">다시 테스트</button>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // 테스트 실행
+        function runTests() {
+            console.log('=== AAC 앱 시스템 체크 시작 ===');
+            
+            // 1. Storage 테스트
+            console.log('1. Storage 모듈 체크...');
+            if (typeof window.AACStorage === 'undefined') {
+                testResults.storage.status = 'fail';
+                testResults.storage.message = 
+                    `window.AACStorage가 정의되지 않았습니다.\n\n` +
+                    `가능한 원인:\n` +
+                    `• storage.js 파일 로드 실패\n` +
+                    `• JavaScript 문법 오류\n` +
+                    `• 브라우저 캐시 문제\n\n` +
+                    `해결 방법:\n` +
+                    `1. 브라우저 개발자 도구(F12) 열기\n` +
+                    `2. Network 탭에서 storage.js 로드 확인\n` +
+                    `3. Console 탭에서 오류 메시지 확인`;
+            } else {
+                try {
+                    const cards = window.AACStorage.getCards();
+                    const categories = window.AACStorage.getCategories();
+                    testResults.storage.status = 'pass';
+                    testResults.storage.message = 
+                        `✅ AACStorage 정상 로드\n\n` +
+                        `타입: ${typeof window.AACStorage}\n` +
+                        `메서드: ${Object.keys(window.AACStorage).length}개\n` +
+                        `카드: ${cards.length}개\n` +
+                        `카테고리: ${categories.length}개`;
+                } catch (error) {
+                    testResults.storage.status = 'fail';
+                    testResults.storage.message = 
+                        `AACStorage는 존재하지만 메서드 호출 실패\n\n` +
+                        `에러: ${error.message}\n\n` +
+                        `스택: ${error.stack}`;
+                }
+            }
+            
+            // 2. TTS 테스트
+            console.log('2. TTS 모듈 체크...');
+            if (typeof window.TTS === 'undefined') {
+                testResults.tts.status = 'fail';
+                testResults.tts.message = 
+                    `window.TTS가 정의되지 않았습니다.\n\n` +
+                    `가능한 원인:\n` +
+                    `• tts.js 파일 로드 실패\n` +
+                    `• Storage 의존성 문제\n` +
+                    `• JavaScript 문법 오류`;
+            } else {
+                try {
+                    const hasInit = typeof window.TTS.init === 'function';
+                    const hasSpeak = typeof window.TTS.speak === 'function';
+                    testResults.tts.status = hasInit && hasSpeak ? 'pass' : 'fail';
+                    testResults.tts.message = 
+                        `✅ TTS 정상 로드\n\n` +
+                        `타입: ${typeof window.TTS}\n` +
+                        `init 메서드: ${hasInit ? '존재' : '없음'}\n` +
+                        `speak 메서드: ${hasSpeak ? '존재' : '없음'}\n` +
+                        `useResponsiveVoice: ${window.TTS.useResponsiveVoice}`;
+                } catch (error) {
+                    testResults.tts.status = 'fail';
+                    testResults.tts.message = `TTS 접근 중 에러: ${error.message}`;
+                }
+            }
+            
+            // 3. App 테스트
+            console.log('3. App 초기화 체크...');
+            if (typeof currentCards === 'undefined') {
+                testResults.app.status = 'fail';
+                testResults.app.message = 
+                    `currentCards 변수가 정의되지 않았습니다.\n\n` +
+                    `가능한 원인:\n` +
+                    `• app.js 파일 로드 실패\n` +
+                    `• 의존성(Storage, TTS) 로드 실패\n` +
+                    `• JavaScript 실행 오류`;
+            } else {
+                try {
+                    testResults.app.status = 'pass';
+                    testResults.app.message = 
+                        `✅ App 정상 로드\n\n` +
+                        `currentCards: ${currentCards.length}개\n` +
+                        `currentCategories: ${typeof currentCategories !== 'undefined' ? currentCategories.length + '개' : 'undefined'}\n` +
+                        `selectedCategory: ${typeof selectedCategory !== 'undefined' ? selectedCategory : 'undefined'}`;
+                } catch (error) {
+                    testResults.app.status = 'fail';
+                    testResults.app.message = `App 변수 접근 중 에러: ${error.message}`;
+                }
+            }
+            
+            console.log('=== 시스템 체크 완료 ===');
+            console.log('Results:', testResults);
+            
+            // UI 업데이트
+            if (loadingDiv) loadingDiv.style.display = 'none';
+            if (resultsDiv) {
+                resultsDiv.style.display = 'block';
+                renderResults();
+            }
+        }
+        
+        // DOM 로드 후 실행
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        function init() {
+            resultsDiv = document.getElementById('results');
+            loadingDiv = document.getElementById('loading');
+            
+            // 1초 후 테스트 실행 (모든 스크립트 로드 대기)
+            setTimeout(runTests, 1000);
+        }
+        
+        // 전역 에러 캡처
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('전역 에러:', msg, url, line);
+            if (resultsDiv) {
+                resultsDiv.style.display = 'block';
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                resultsDiv.innerHTML = createCard(
+                    '❌ 전역 에러 발생',
+                    'fail',
+                    `메시지: ${msg}\n파일: ${url}\n위치: ${line}:${col}\n${error ? error.stack : ''}`
+                );
+            }
+            return false;
+        };
+    })();
+    </script>
+</body>
+</html>
