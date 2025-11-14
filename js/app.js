@@ -330,6 +330,11 @@ function openAddCardDialog() {
     document.getElementById('card-category').value = '';
     document.getElementById('card-color').value = '#BBDEFB';
     document.getElementById('color-preview').style.backgroundColor = '#BBDEFB';
+    
+    // 새 카테고리 입력 섹션 숨기기
+    const newCatSection = document.getElementById('new-category-section');
+    if (newCatSection) newCatSection.style.display = 'none';
+    
     document.getElementById('card-dialog').style.display = 'flex';
 }
 
@@ -732,6 +737,65 @@ function updateCategorySelect() {
 }
 
 /**
+ * 새 카테고리 입력 필드 토글
+ */
+function toggleNewCategoryInput() {
+    const section = document.getElementById('new-category-section');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        document.getElementById('new-category-name').focus();
+    } else {
+        section.style.display = 'none';
+        // 입력 필드 초기화
+        document.getElementById('new-category-name').value = '';
+        document.getElementById('new-category-icon').value = 'folder';
+        document.getElementById('new-category-color').value = '#9C27B0';
+    }
+}
+
+/**
+ * 카드 다이얼로그에서 새 카테고리 생성
+ */
+function createNewCategoryFromCard() {
+    const name = document.getElementById('new-category-name').value.trim();
+    const icon = document.getElementById('new-category-icon').value.trim() || 'folder';
+    const bgColor = document.getElementById('new-category-color').value;
+    
+    if (!name) {
+        showToast('카테고리 이름을 입력해주세요');
+        return;
+    }
+    
+    // 중복 체크
+    if (currentCategories.find(c => c.name === name)) {
+        showToast('이미 존재하는 카테고리입니다');
+        return;
+    }
+    
+    // 카테고리 추가
+    const categoryData = {
+        name: name,
+        icon: icon,
+        backgroundColor: bgColor,
+        order: currentCategories.length + 1
+    };
+    
+    const newCategory = AACStorage.addCategory(categoryData);
+    
+    // 카테고리 목록 새로고침
+    loadCategories();
+    updateCategorySelect();
+    
+    // 새로 만든 카테고리를 선택하기
+    document.getElementById('card-category').value = name;
+    
+    // 입력 필드 숨기기
+    toggleNewCategoryInput();
+    
+    showToast(`"카테고리 "가 추가되었습니다`);
+}
+
+/**
  * 설정 다이얼로그 열기
  */
 function openSettingsDialog() {
@@ -1091,7 +1155,13 @@ function importCardsFromCSV(event) {
     
     reader.onload = function(e) {
         try {
-            const csv = e.target.result;
+            let csv = e.target.result;
+            
+            // UTF-8 BOM 제거 (Excel에서 생성된 CSV 파일)
+            if (csv.charCodeAt(0) === 0xFEFF) {
+                csv = csv.substring(1);
+            }
+            
             const lines = csv.split('\n');
             
             // 헤더 제거
@@ -1139,7 +1209,8 @@ function importCardsFromCSV(event) {
         }
     };
     
-    reader.readAsText(file, 'UTF-8');
+    // UTF-8 BOM 처리를 위해 readAsText 사용
+    reader.readAsText(file);
 }
 
 /**
