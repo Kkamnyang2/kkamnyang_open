@@ -1,5 +1,9 @@
 # 🗣️ TalkSeed AAC - 무료 의사소통 앱
 
+[![GitHub Pages](https://img.shields.io/badge/demo-live-brightgreen)](https://kkamnyang2.github.io/talkseed_aac/)
+[![Version](https://img.shields.io/badge/version-v17-blue)](https://github.com/Kkamnyang2/talkseed_aac/releases)
+[![License](https://img.shields.io/badge/license-free-orange)](https://github.com/Kkamnyang2/talkseed_aac)
+
 **TalkSeed AAC**는 언어 장애가 있는 분들을 위한 무료 AAC (Augmentative and Alternative Communication) 웹 애플리케이션입니다.
 
 ## ✨ 주요 기능
@@ -34,19 +38,19 @@
 
 ### 온라인 사용
 GitHub Pages에서 바로 사용하세요:
-👉 **[TalkSeed AAC 열기](https://kkamnyang2.github.io/kkamnyang_open/)**
+👉 **[TalkSeed AAC 열기](https://kkamnyang2.github.io/talkseed_aac/)**
 
 ### 오프라인 사용
 1. 저장소 다운로드 또는 클론
 ```bash
-git clone https://github.com/Kkamnyang2/kkamnyang_open.git
+git clone https://github.com/Kkamnyang2/talkseed_aac.git
 ```
 
 2. `index.html` 파일을 브라우저로 열기
 
 또는 로컬 서버 실행:
 ```bash
-cd kkamnyang_open
+cd talkseed_aac
 python3 -m http.server 8000
 # 브라우저에서 http://localhost:8000 접속
 ```
@@ -179,7 +183,7 @@ aac_html_app_v2/
 
 ## 📞 문의
 
-- GitHub Issues: [이슈 등록](https://github.com/Kkamnyang2/kkamnyang_open/issues)
+- GitHub Issues: [이슈 등록](https://github.com/Kkamnyang2/talkseed_aac/issues)
 
 ---
 
